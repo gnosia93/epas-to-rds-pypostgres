@@ -1,14 +1,8 @@
--- alter session set "_ORACLE_SCRIPT"=true;
-drop tablespace tbs_shop including contents and datafiles;
-create tablespace tbs_shop datafile '/u01/app/oracle/oradata/XE/tbs_shop.dbf' size 1G autoextend on;
---create tablespace tbs_shop datafile size 10G autoextend on;
-
 drop user shop cascade;
-create user shop identified by shop
-default tablespace tbs_shop
-temporary tablespace temp;
+create user shop password 'shop';
 
-grant connect, resource, dba to shop;
+create tablespace tbs_shop location '/var/lib/edb-as/13/main/pg_tblspc';
+create database shop_db owner = shop tablespace = tbs_shop;
 
 --drop sequence shop.seq_product_product_id;
 create sequence shop.seq_product_product_id
