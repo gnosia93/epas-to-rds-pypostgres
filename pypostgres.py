@@ -7,7 +7,7 @@
         tb_order_detail
         tb_comment
 """
-import cx_Oracle
+import psycopg2
 import datetime
 import random
 import configparser
@@ -31,7 +31,7 @@ NUMBER_OF_ORDER_CLIENT = int(config['DEFAULT']['NUMBER_OF_ORDER_CLIENT'])
 
 class Database:
     def __init__(self):
-        self.conn = cx_Oracle.connect(ORACLE_DB_URL)
+        self.conn = psycopg2.connect(host='15.165.75.213', dbname='shop_db', user='shop', password='shop', port=5444)
         self.cursor = self.conn.cursor()
 
     def save(self, sql, t = None):
@@ -48,6 +48,10 @@ class Database:
 
     def commit(self):
         self.conn.commit()
+
+    def rollback(self):
+
+        pass
 
     def closeCursor(self):
         self.cursor.close()
@@ -77,11 +81,13 @@ class Product:
         self.database = database
 
     def newProduct(self):
+        self.database.cursor.execute("BEGIN")
         sql = "select shop.seq_product_product_id.nextval from dual"
         self.database.query(sql)
         (productId,) = self.database.fetchOne()
 
-        filename = str(productId % 20 + 1) + ".jpg"
+        #filename = str(productId % 20 + 1) + ".jpg"
+        filename = "1.jpg"
         imageFilePath = DATA_PATH + "/" + filename
         with open(PRODUCT_DESCRIPTION_HTML_PATH, "r") as f, open(imageFilePath, "rb") as w:
             productDescription = f.read()            # description is clob
@@ -90,7 +96,7 @@ class Product:
 
             productTuple = (productId, getRandomCatogoryId(), 'product#' + str(productId), 100, 'A', productDescription, productImage, imageUrl)
             sql = "insert into shop.tb_product(product_id, category_id, name, price, delivery_type, description, image_data, image_url) " \
-                  "values(:1, :2, :3, :4, :5, :6, :7, :8)"
+                  "values(%s, %s, %s, %s, %s, %s, %s, %s)"
             self.database.save(sql, productTuple)
             self.database.commit()
 
@@ -106,6 +112,7 @@ class Comment:
         self.database = database
 
     def newComment(self):
+        self.database.cursor.execute("BEGIN")
         sql = "select shop.seq_comment_comment_id.nextval from dual"
         self.database.query(sql)
         (commentId,) = self.database.fetchOne()
@@ -116,7 +123,7 @@ class Comment:
         commentBody = "................... comment" + str(commentId)
         commentTuple = (commentId, memberId, productId, score, commentBody)
 
-        sql = "insert into shop.tb_comment(comment_id, member_id, product_id, score, comment_body) values(:1, :2, :3, :4, :5)"
+        sql = "insert into shop.tb_comment(comment_id, member_id, product_id, score, comment_body) values(%s, %s, %s, %s, %s)"
         self.database.save(sql, commentTuple)
         self.database.commit()
 
@@ -139,15 +146,23 @@ class Order:
         return self.getCurrentDate() + str(orderNo).zfill(12)
 
     def newOrder(self):
+      #  self.database.cursor.execute("BEGIN")
         orderNo = self.getOrderNo()
 
         # 세부 항목 부터 입력.
         for i in range(self.getRandomOrderDetailCount()):
             try:
                 itemTuple = (orderNo, getRandomProductId(), 1000, getRandomOrderProductCount())
-                sql = "insert into shop.tb_order_detail(order_no, product_id, product_price, product_cnt) values(:1, :2, :3, :4)"
+                sql = "insert into shop.tb_order_detail(order_no, product_id, product_price, product_cnt) values(%s, %s, %s, %s)"
+                print(itemTuple)
+
                 self.database.save(sql, itemTuple)
-            except:
+                self.database.commit()
+            except Exception as e:
+                print("exception --- " + sql)
+                print(itemTuple)
+                print(e)
+                self.database.commit()
                 pass    # getRandomProductId() 값이 중복인 경우 그냥 skip 한다.
 
         # 주문 정보 입력
@@ -160,7 +175,7 @@ class Order:
               "from tb_order_detail " \
               "where order_no = '{orderNo}'".format(orderNo=orderNo, memberId=getOrderMember())
 
-        #print(sql)
+        print(sql)
         self.database.save(sql)
         self.database.commit()
 
@@ -229,5 +244,6 @@ if __name__ == '__main__':
     for i in range(1, NUMBER_OF_ORDER_CLIENT):
         orderThread = threading.Thread(target=makeOrder, args=(i,))
         orderThread.start()
+
 
 
