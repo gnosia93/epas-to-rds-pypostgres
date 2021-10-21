@@ -16,4 +16,4 @@ echo 'create epas database.. ip '$PPAS_IP
 psql -U enterprisedb -d edb -h $PPAS_IP -p $PPAS_PORT -a -f ./ppas-database.sql
 
 echo 'create rds database.. endpoint '$RDS_IP
-psql -U postgres -d postgres -h $RDS_IP -p $RDS_PORT -a -f ./ppas-database.sql
+psql -U postgres -d postgres -h $RDS_IP -p $RDS_PORT -a -f ./rds-database.sql
