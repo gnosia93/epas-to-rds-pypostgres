@@ -1,7 +1,7 @@
 """
     author: soonbeom@amazon.com
     description :
-        oracle database initialization script which includes following tables
+        postgres database initializer of following tables
         tb_product
         tb_order
         tb_order_detail
@@ -16,9 +16,7 @@ import threading,sys
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-ORACLE_11XE_URL = config['DEFAULT']['ORACLE_11XE_URL']
-ORACLE_19C_URL = config['DEFAULT']['ORACLE_19C_URL']
-ORACLE_DB_URL = ""
+POSTGRES_HOST = config['DEFAULT']['POSTGRES_HOST']
 
 DATA_PATH = config['DEFAULT']['DATA_PATH']
 DEFAULT_PRODUCT_COUNT = int(config['DEFAULT']['DEFAULT_PRODUCT_COUNT'])
@@ -31,7 +29,7 @@ NUMBER_OF_ORDER_CLIENT = int(config['DEFAULT']['NUMBER_OF_ORDER_CLIENT'])
 
 class Database:
     def __init__(self):
-        self.conn = psycopg2.connect(host='15.165.75.213', dbname='shop_db', user='shop', password='shop', port=5444)
+        self.conn = psycopg2.connect(host=POSTGRES_HOST, dbname='shop_db', user='shop', password='shop', port=5444)
         self.cursor = self.conn.cursor()
 
     def save(self, sql, t = None):
@@ -154,14 +152,14 @@ class Order:
             try:
                 itemTuple = (orderNo, getRandomProductId(), 1000, getRandomOrderProductCount())
                 sql = "insert into shop.tb_order_detail(order_no, product_id, product_price, product_cnt) values(%s, %s, %s, %s)"
-                print(itemTuple)
+                #print(itemTuple)
 
                 self.database.save(sql, itemTuple)
                 self.database.commit()
             except Exception as e:
-                print("exception --- " + sql)
-                print(itemTuple)
-                print(e)
+                #print("exception --- " + sql)
+                #print(itemTuple)
+                #print(e)
                 self.database.commit()
                 pass    # getRandomProductId() 값이 중복인 경우 그냥 skip 한다.
 
@@ -223,7 +221,7 @@ def makeOrder(number):
     database.close()
 
 def verbose():
-    print('ORACLE_DB_URL:', ORACLE_DB_URL)
+    print('POSTGRES_HOST:', POSTGRES_HOST)
     print('DATA_PATH', DATA_PATH)
     print('PRODUCT_DESCRIPTION_HTML_PATH:', DATA_PATH + "/product_body.html")
     print('DEFAULT_PRODUCT_COUNT:', DEFAULT_PRODUCT_COUNT)
