@@ -2,7 +2,7 @@
 
 --create tablespace tbs_shop location '/var/lib/edb-as';
 --create database shop_db owner = shop tablespace = tbs_shop;
---create schema shop AUTHORIZATION shop;
+create schema shop AUTHORIZATION shop;
 
 drop sequence shop.seq_product_product_id;
 create sequence shop.seq_product_product_id
