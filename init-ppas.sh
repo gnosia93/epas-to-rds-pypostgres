@@ -1,2 +1,2 @@
 #! /bin/sh
-python3 pyoracle.py ppas
+python3 pypostgres.py ppas
